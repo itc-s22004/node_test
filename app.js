@@ -8,6 +8,7 @@ import logger from "morgan";
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
+import adminRouter from "./routes/admin.js";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use(cors({
 
 app.use("/", indexRouter);
 app.use("/user", usersRouter);
+app.use("/admin", adminRouter);
 
 // 404
 app.use((req, res, next) => {
@@ -59,5 +61,10 @@ const errorHandler = (err, req, res, next) => {
   res.status(err.status || 500).json({message});
 };
 app.use(errorHandler);
+
+BigInt.prototype.toJSON = function () {
+  return this.toString()
+}
+
 
 export default app;

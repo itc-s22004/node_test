@@ -22,7 +22,7 @@ model Users {
 
 model Books {
   id          BigInt   @id @default(autoincrement())
-  isbn13      Int      @unique
+  isbn13      Decimal  @db.Decimal(13, 0)
   title       String   @db.VarChar(200)
   author      String   @db.VarChar(100)
   publishDate DateTime @db.Date

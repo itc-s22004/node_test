@@ -29,23 +29,24 @@ export const calcHash = (plain, salt) => {
 /**
  * Passport.js を設定する
  */
+
 const config = (passport) => {
     const prisma = new PrismaClient();
     passport.use(new LocalStrategy({
-        usernameField: "name", passwordField: "pass"
-    }, async (username, password, done) => {
+        usernameField: "email", passwordField: "password"
+    }, async (email, password, done) => {
         try {
-            const user = await prisma.user.findUnique({
-                where: {name: username}
+            const user = await prisma.users.findUnique({
+                where: {email: email}
             });
             if (!user) {
                 // ユーザがいない
-                return done(null, false, {message: "invalid username and/or password."});
+                return done(null, false, {message: "invalid email and/or password."});
             }
             const hashed = calcHash(password, user.salt);
-            if (!crypto.timingSafeEqual(user.pass, hashed)) {
+            if (!crypto.timingSafeEqual(user.password, hashed)) {
                 // パスワード違う
-                return done(null, false, {message: "invalid username and/or password.."});
+                return done(null, false, {message: "invalid email and/or password.."});
             }
             // OK
             return done(null, user);
@@ -56,7 +57,7 @@ const config = (passport) => {
     // セッションストアに保存
     passport.serializeUser((user, done) => {
         process.nextTick(() => {
-            done(null, {id: user.id, name: user.name});
+            done(null, {id: user.id, email: user.email});
         });
     });
     // セッションストアから復元
