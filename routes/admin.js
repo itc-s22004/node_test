@@ -1,3 +1,5 @@
+// adminだったら追加できるようにする　の判定しないといけない
+
 import express from "express";
 import passport from "passport";
 import {PrismaClient} from "@prisma/client";
