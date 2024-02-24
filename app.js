@@ -9,7 +9,8 @@ import logger from "morgan";
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
 import adminRouter from "./routes/admin.js";
-import bookRouter from "./routes/books.js"
+import bookRouter from "./routes/books.js";
+import rentalRouter from "./routes/rental.js";
 
 const app = express();
 
@@ -37,6 +38,8 @@ app.use("/", indexRouter);
 app.use("/user", usersRouter);
 app.use("/admin", adminRouter);
 app.use("/book", bookRouter);
+app.use("/rental", rentalRouter);
+
 
 // 404
 app.use((req, res, next) => {

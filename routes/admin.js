@@ -14,14 +14,14 @@ const prisma = new PrismaClient();
  * 全経路でログイン済みかチェックする
  */
 router.use((req, res, next) => {
-    if (!req.user) {
-        const err = new Error("unauthenticated");
-        err.status = 401;
+    console.log(req.user.isAdmin)
+    if (!req.user.isAdmin) {
+        const err = new Error("you not admin");
+        err.status = 403;
         throw err;
     }
-    // 問題なければ次へ
     next();
-});
+})
 
 // 管理者権限チェックミドルウェア
 const checkAdminMiddleware = async (req, res, next) => {
@@ -65,10 +65,5 @@ router.all('*', (req, res) => {
     return handle(req, res);
 });
 
-const PORT = process.env.PORT || 3000;
-// router.listen(PORT, (err) => {
-//     if (err) throw err;
-//     console.log(`> Ready on http://localhost:${PORT}`);
-// });
 
 export default router;
