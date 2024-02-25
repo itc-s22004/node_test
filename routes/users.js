@@ -85,10 +85,12 @@ router.post("/register", [
 });
 
 router.get("/logout", (req, res, next) => {
-    res.logout((err) => {
-        res.json({
-            message: "logout"
-        });
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        // res.redirect("/users/login");
+        res.json({message: "Logout"})
     });
 });
 
