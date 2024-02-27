@@ -6,23 +6,18 @@ const prisma = new PrismaClient();
 
 router.use((req, res, next) => {
     if (!req.user) {
-        // 未ログイン
         const err = new Error("unauthenticated");
         err.status = 401;
         throw err;
     }
-    // 問題なければ次へ
     next();
 });
 
-
-
 router.post('/start', async (req, res) => {
     const {bookId} = req.body;
-    const userId = req.user.id; // 認証済みユーザーのIDを仮定
+    const userId = req.user.id;
 
     try {
-        // 既に貸出中の書籍か確認
         const existingRental = await prisma.rental.findFirst({
             where: {
                 bookId: BigInt(bookId),
@@ -31,15 +26,16 @@ router.post('/start', async (req, res) => {
         });
 
         if (existingRental) {
-            return res.status(409).send({message: 'Book is already rented.'});
+            return res.status(409).send({message: '貸出中　失敗'});
         }
 
         // 貸出処理
         const today = new Date();
         const returnDeadline = new Date(today);
-        returnDeadline.setDate(today.getDate() + 7); // 2週間後を返却期限とする
+        returnDeadline.setDate(today.getDate() + 7);
 
         const newRental = await prisma.rental.create({
+
             data: {
                 bookId: BigInt(bookId),
                 userId: BigInt(userId),
@@ -56,22 +52,24 @@ router.post('/start', async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(400).send({message: 'An error occurred'});
+        res.status(400).json({message: error})
     }
 });
 
 router.put('/return', async (req, res, next) => {
     const {rentalId} = req.body;
+    const userId = req.user.id
 
     try {
         const rental = await prisma.rental.findUnique({
             where: {
                 id: BigInt(rentalId),
+                userId: userId
             },
         });
 
         if (!rental) {
-            return res.status(400).json({result: 'NG', message: 'Rental record not found.'});
+            return res.status(400).json({result: 'NG', message: 'その他のエラー'});
         }
 
         if (rental.returnDate) {
@@ -81,13 +79,17 @@ router.put('/return', async (req, res, next) => {
         const updatedRental = await prisma.rental.update({
             where: {
                 id: BigInt(rentalId),
+                userId: userId
             },
             data: {
-                returnDate: new Date(), // 現在の日時を返却日とする
+                returnDate: new Date(),
             },
         });
 
-        res.status(200).json({result: 'OK'});
+        res.status(200).json({
+            result: 'OK',
+            // userId: userId
+        });
     } catch (error) {
         console.error(error);
         res.status(400).json({result: 'NG', message: '---An error occurred.---'});
@@ -95,9 +97,14 @@ router.put('/return', async (req, res, next) => {
 });
 
 router.get("/current", async (req, res, next) => {
+    const userId = await req.user.id
     try {
-        const [rentalBooks] = await Promise.all([
+        const [rentalAllBooks] = await Promise.all([
             prisma.rental.findMany({
+                where: {
+                    returnDate: null,
+                    userId: userId
+                },
                 orderBy: {
                     id: "asc"
                 },
@@ -114,6 +121,13 @@ router.get("/current", async (req, res, next) => {
                 }
             })
         ])
+        const rentalBooks = rentalAllBooks.map(book => ({
+            rentalId: book.id,
+            bookId: book.bookId,
+            bookName: book.Books.title,
+            rentalDate: book.rentalDate,
+            returnDeadline: book.returnDeadline
+        }));
         res.status(200).json({
             rentalBooks
         })
@@ -124,9 +138,13 @@ router.get("/current", async (req, res, next) => {
 })
 
 router.get("/history", async (req, res, next) => {
+    const userId = await req.user.id
     try {
         const [rentalBooks] = await Promise.all([
             prisma.rental.findMany({
+                where: {
+                    userId: userId
+                },
                 orderBy: {
                     id: "asc"
                 },

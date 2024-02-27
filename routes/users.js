@@ -11,14 +11,12 @@ const prisma = new PrismaClient();
 
 router.get("/", (req, res, next) => {
     if (!req.user) {
-        // 未ログインなら、Error オブジェクトを作って、ステータスを設定してスロー
         const err = new Error("unauthenticated");
         res.status(400).json({
             message: "---username and/or password is empty---"
         });
         throw err;
     }
-    // ここに来れるなら、ログイン済み。
     res.json({
         message: "logged in"
     });
@@ -27,16 +25,35 @@ router.get("/", (req, res, next) => {
 router.post("/login", passport.authenticate("local", {
     failWithError: true // passport によるログインに失敗したらエラーを発生させる
 }), (req, res, next) => {
-    // ここに来れるなら、ログインは成功していることになる。
     const isAdmin = req.user.isAdmin;
-    res.json({
-        message: "Login OK!!!!",
+    if (!req.user.id) {
+        const err = new Error("ログインできてない")
+        err.status = 401
+        throw err;
+    }
+    res.status(200).json({
+        message: "OK",
         isAdmin: isAdmin
     });
-});
+})
+// router.post("/login", passport.authenticate("local", {
+//     failWithError: true
+// }), (req, res, next) => {
+//     const isAdmin = req.user.isAdmin;
+//     res.status(200).json({
+//         message: "OK",
+//         isAdmin: isAdmin
+//     });
+// }, (err, req, res, next) => {
+//     if (err) {
+//         res.status(401).json({
+//             message: "NG",
+//         });
+//     }
+// });
+
 
 router.post("/register", [
-    // 入力値チェックミドルウェア
     check("name").notEmpty({ignore_whitespace: true}),
     check("email").notEmpty({ignore_whitespace: true}),
     check("password").notEmpty({ignore_whitespace: true})
@@ -63,19 +80,13 @@ router.post("/register", [
             message: "created!!!!"
         });
     } catch (e) {
-        // データベース側で何らかのエラーが発生したときにここへ来る。
         switch (e.code) {
             case "P2002":
-                // このエラーコードは、データベースの制約違反エラーっぽい。
-                // おそらくUnique制約が設定されている name なので
-                // すでに登録されている名前と同じ名前のユーザを登録しようとした。
-                res.status(400).json({
-                    message: "username is already registered"
+                res.status(409).json({
+                    message: "NG"
                 });
                 break;
             default:
-                // その他のエラー全てに対応できないので
-                // 詳細をコンソールに吐き出して、クライアントにはエラーのことだけ伝える。
                 console.error(e);
                 res.status(500).json({
                     message: "unknown error"
@@ -93,5 +104,21 @@ router.get("/logout", (req, res, next) => {
         res.json({message: "Logout"})
     });
 });
+
+router.get("/check", async (req, res, next) => {
+    if (!req.user) {
+        const err = new Error("unauthenticated");
+        res.status(401).json({
+            message: "NG"
+        });
+        throw err;
+    }
+    const isAdmin = req.user.isAdmin;
+    res.status(200).json({
+        message: "OK",
+        isAdmin: isAdmin
+    });
+
+})
 
 export default router;
