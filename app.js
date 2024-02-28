@@ -59,7 +59,7 @@ const errorHandler = (err, req, res, next) => {
     let message = "Internal Server Error";
     if (err.status === 401) {
         // ここに来る場合は、未認証によるエラーなのでメッセージを書き換える。
-        message = "not login";
+        message = "NG";
     } else if (err.status === 403) {
         message = "NG"
     } else {

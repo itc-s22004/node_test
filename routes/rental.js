@@ -29,7 +29,6 @@ router.post('/start', async (req, res) => {
             return res.status(409).send({message: '貸出中　失敗'});
         }
 
-        // 貸出処理
         const today = new Date();
         const returnDeadline = new Date(today);
         returnDeadline.setDate(today.getDate() + 7);
@@ -52,7 +51,7 @@ router.post('/start', async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(400).json({message: error})
+        res.status(400).json({message: "その他のエラー"})
     }
 });
 
@@ -69,7 +68,7 @@ router.put('/return', async (req, res, next) => {
         });
 
         if (!rental) {
-            return res.status(400).json({result: 'NG', message: 'その他のエラー'});
+            return res.status(400).json({result: 'NG'});
         }
 
         if (rental.returnDate) {

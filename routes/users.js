@@ -3,8 +3,6 @@ import {check, validationResult} from "express-validator";
 import passport from "passport";
 import {calcHash, generateSalt} from "../util/auth.js";
 import {PrismaClient} from "@prisma/client";
-import {Strategy as LocalStrategy} from 'passport-local';
-import bcrypt from "bcrypt";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -36,21 +34,6 @@ router.post("/login", passport.authenticate("local", {
         isAdmin: isAdmin
     });
 })
-// router.post("/login", passport.authenticate("local", {
-//     failWithError: true
-// }), (req, res, next) => {
-//     const isAdmin = req.user.isAdmin;
-//     res.status(200).json({
-//         message: "OK",
-//         isAdmin: isAdmin
-//     });
-// }, (err, req, res, next) => {
-//     if (err) {
-//         res.status(401).json({
-//             message: "NG",
-//         });
-//     }
-// });
 
 
 router.post("/register", [
@@ -77,7 +60,7 @@ router.post("/register", [
             }
         });
         res.status(201).json({
-            message: "created!!!!"
+            message: "created"
         });
     } catch (e) {
         switch (e.code) {
@@ -101,7 +84,7 @@ router.get("/logout", (req, res, next) => {
             return next(err);
         }
         // res.redirect("/users/login");
-        res.json({message: "Logout"})
+        res.json({result: "OK"})
     });
 });
 
@@ -115,7 +98,7 @@ router.get("/check", async (req, res, next) => {
     }
     const isAdmin = req.user.isAdmin;
     res.status(200).json({
-        message: "OK",
+        result: "OK",
         isAdmin: isAdmin
     });
 

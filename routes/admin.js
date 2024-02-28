@@ -8,10 +8,14 @@ const prisma = new PrismaClient();
 
 
 router.use((req, res, next) => {
-    console.log(req.user.isAdmin)
     if (!req.user.isAdmin) {
         const err = new Error("you not admin");
         err.status = 403;
+        throw err;
+    }
+    if (!req.user.id) {
+        const err = new Error("ログインできてない")
+        err.status = 401
         throw err;
     }
     next();
@@ -27,7 +31,7 @@ const checkAdminMiddleware = async (req, res, next) => {
     next();
 };
 
-router.post("/book/create", checkAdminMiddleware, async (req, res) => {
+router.post("/book/create", async (req, res) => {
     const {isbn13, title, author, publishDate} = req.body;
 
     if (!isbn13 || !title || !author || !publishDate) {

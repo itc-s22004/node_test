@@ -1,7 +1,5 @@
 import express from "express";
 import {PrismaClient} from "@prisma/client";
-import {check, validationResult} from "express-validator";
-import rental from "./rental.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -28,7 +26,7 @@ router.use((req, res, next) => {
 router.get('/list/:page?', async (req, res, next) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
-        const limit = 10; // 1ページあたりのアイテム数
+        const limit = 10;
         const skip = (page - 1) * limit;
 
         const books = await prisma.books.findMany({
@@ -40,6 +38,7 @@ router.get('/list/:page?', async (req, res, next) => {
                 author: true,
             }
         });
+
 
         const booksWithRentalStatus = await Promise.all(books.map(async (book) => {
             const rental = await prisma.rental.findFirst({
@@ -54,8 +53,11 @@ router.get('/list/:page?', async (req, res, next) => {
             };
         }));
 
+        const maxPageCount = Math.ceil(books.length / maxItemCount)
+
         res.json({
             books: booksWithRentalStatus,
+            maxPageCount: maxPageCount
         });
     } catch (error) {
         next(error);
@@ -106,7 +108,6 @@ router.get('/list/:page?', async (req, res, next) => {
 // isRental: book.rentals > 0 ? "true" : "false", // rentals配列が空でなければ"true"
 
 
-
 router.get('/detail/:id', loginCheck, async (req, res) => {
     const bookId = parseInt(req.params.id, 10);
 
@@ -121,12 +122,12 @@ router.get('/detail/:id', loginCheck, async (req, res) => {
                 publishDate: true,
                 rentals: {
                     where: {
-                        returnDate: null // 現在貸し出されている（返却日がnull）レンタル情報を取得
+                        returnDate: null
                     },
                     select: {
                         User: {
                             select: {
-                                name: true // ユーザ名を取得
+                                name: true
                             }
                         },
                         rentalDate: true,
@@ -138,7 +139,7 @@ router.get('/detail/:id', loginCheck, async (req, res) => {
         });
 
         if (book && book.rentals.length > 0) {
-            const rentalInfo = book.rentals[0]; // 最新の貸出情報を取得
+            const rentalInfo = book.rentals[0];
             const rentalDate = new Date(rentalInfo.rentalDate);
             const returnDeadline = new Date(rentalDate);
             returnDeadline.setDate(rentalDate.getDate() + 7);
@@ -168,7 +169,6 @@ router.get('/detail/:id', loginCheck, async (req, res) => {
         res.status(500).send('Internal server error');
     }
 });
-
 
 
 export default router;
